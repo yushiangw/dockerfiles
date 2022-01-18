@@ -14,7 +14,7 @@ WORKDIR /cgal
 RUN curl -sSL https://github.com/CGAL/cgal/releases/download/v5.3.1/CGAL-5.3.1.zip   -o /cgal/CGAL-5.3.1.zip \
     && unzip CGAL-5.3.1.zip -d /cgal/
 
-ENV export CGAL_DIR=/cgal/CGAL-5.3.1/
+ENV CGAL_DIR=/cgal/CGAL-5.3.1/
 
 WORKDIR /
 
