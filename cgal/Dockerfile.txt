@@ -1,4 +1,4 @@
-FROM nvidia/cudagl:10.2-devel-ubuntu18.04
+FROM yushiang-pyt-1.8
 
 RUN apt-get clean 
 RUN apt-get update
