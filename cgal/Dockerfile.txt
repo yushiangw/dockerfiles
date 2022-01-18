@@ -41,7 +41,8 @@ RUN wget https://boostorg.jfrog.io/artifactory/main/release/1.66.0/source/boost_
 RUN tar --bzip2 -xf /boost/boost_1_66_0.tar.bz2
 WORKDIR   /boost/boost_1_66_0
 RUN /boost/boost_1_66_0/bootstrap.sh && \
-    /boost/boost_1_66_0/b2.sh install 
+    ls 
+RUN /boost/boost_1_66_0/b2.sh install 
 
 
 WORKDIR /
