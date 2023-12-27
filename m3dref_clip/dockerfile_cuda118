@@ -1,6 +1,7 @@
-#FROM nvidia/cuda:11.8.0-devel-ubuntu22.04
 #FROM  pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel 
-FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+#FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+#docker pull nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
+FROM  nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
 
 RUN perl -i.bak -pe 's#\/archive\.ubuntu\.com#\/tw\.archive\.ubuntu\.com#g'  /etc/apt/sources.list
 
@@ -21,12 +22,13 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py310_23.11.0-1-
 ENV PATH=$CONDA_DIR/bin:$PATH 
 # RUN conda install -y pytorch==2.1.1 torchvision==0.16.1 torchaudio==2.1.1 pytorch-cuda=11.8 -c pytorch -c nvidia  -c anaconda
 #RUN conda install -y pytorch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 pytorch-cuda=11.7 -c pytorch -c nvidia
-RUN pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+# RUN pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+RUN pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
 
 #RUN conda install -c fvcore -c iopath -c conda-forge fvcore iopath
 RUN pip install -U fvcore iopath
 
-RUN pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu117_pyt201/download.html
+RUN pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu118_pyt201/download.html
 
 RUN conda install -y -c anaconda  openblas
 
@@ -61,6 +63,9 @@ RUN apt-get update && apt-get install -y \
     libosmesa6-dev \
     x11-apps
 
+RUN apt-get update && apt-get install -y \
+    libopenblas-dev 
+
 #=========================
 
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
@@ -76,9 +81,11 @@ CMD ["/bin/bash"]
 
 #=========================
 # for MinkowskiEngine
-ENV TORCH_CUDA_ARCH_LIST="8.9"
+ENV TORCH_CUDA_ARCH_LIST="8.0 8.6"
 ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
 ENV MAX_JOBS=4
 
 
-#RUN pip install -U MinkowskiEngine  --config-settings="--blas=openblas" -v --no-deps
+# install MinkowskiEngine with dependencies
+#  pip install -U MinkowskiEngine  --config-settings="--blas=openblas" -v --no-deps
+#  pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --config-settings="--blas_include_dirs=${CONDA_PREFIX}/include" --config-settings="--blas=openblas"

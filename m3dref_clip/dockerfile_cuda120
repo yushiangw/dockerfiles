@@ -1,0 +1,89 @@
+#FROM  pytorch/pytorch:2.0.1-cuda11.7-cudnn8-devel 
+#FROM nvidia/cuda:11.7.1-cudnn8-devel-ubuntu22.04
+#docker pull nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04
+FROM  nvidia/cuda:12.0.0-cudnn8-devel-ubuntu22.04
+
+RUN perl -i.bak -pe 's#\/archive\.ubuntu\.com#\/tw\.archive\.ubuntu\.com#g'  /etc/apt/sources.list
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update \
+    && apt-get install -y build-essential \
+    && apt-get install -y wget git vim sudo 
+    # \
+    # && apt-get clean \
+    # && rm -rf /var/lib/apt/lists/*  
+
+
+ENV CONDA_DIR /opt/conda
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py310_23.11.0-1-Linux-x86_64.sh  -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda
+#
+ENV PATH=$CONDA_DIR/bin:$PATH 
+
+RUN pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu121
+
+RUN pip install -U fvcore iopath
+
+RUN pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py310_cu121_pyt210/download.html
+
+RUN conda install -y -c anaconda  openblas
+
+# check GPU with --gpus all
+# python -c 'import torch; print(torch.cuda.is_available())'
+
+RUN conda install -c conda-forge python-devtools
+RUN pip install graphviz
+RUN apt install -y fonts-freefont-ttf
+RUN pip install jupyterlab
+
+
+#=========================
+
+# OPEN3D 
+RUN apt-get update && apt-get install -y  build-essential \
+    xorg-dev \
+    libxcb-shm0  \
+    libglu1-mesa-dev \
+    clang 
+
+RUN apt-get update && apt-get install -y libc++-dev \
+    libc++abi-dev \
+    libsdl2-dev 
+
+RUN apt-get update && apt-get install -y \
+    ninja-build \
+    libxi-dev \
+    # ML
+    libtbb-dev \
+    # Headless rendering
+    libosmesa6-dev \
+    x11-apps
+
+
+RUN apt-get update && apt-get install -y \
+    libopenblas-dev 
+    
+#=========================
+
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+ARG UID
+ARG GID 
+RUN useradd -rm -l -s /bin/bash dkuser -G sudo -u ${UID} 
+RUN groupadd -g ${GID} ugroup
+USER dkuser 
+WORKDIR /work 
+CMD ["/bin/bash"]
+
+
+#=========================
+# for MinkowskiEngine
+ENV TORCH_CUDA_ARCH_LIST="8.0 8.6 8.7 8.9"
+ENV TORCH_NVCC_FLAGS="-Xfatbin -compress-all"
+ENV MAX_JOBS=4
+
+
+# install MinkowskiEngine with dependencies
+#  pip install -U MinkowskiEngine  --config-settings="--blas=openblas" -v --no-deps
+#  pip install -U git+https://github.com/NVIDIA/MinkowskiEngine -v --no-deps --config-settings="--blas_include_dirs=${CONDA_PREFIX}/include" --config-settings="--blas=openblas"
