@@ -1,0 +1,59 @@
+#FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
+#FROM   nvidia/cuda:11.0.3-devel-ubuntu20.04
+# FROM nvidia/cuda:11.7.1-devel-ubuntu20.04
+FROM nvidia/cuda:11.7.1-devel-ubuntu22.04
+
+
+RUN set -x && cat /etc/apt/sources.list 
+RUN perl -i.bak -pe 's#\/archive\.ubuntu\.com#\/tw\.archive\.ubuntu\.com#g'  /etc/apt/sources.list
+
+RUN apt-get update \
+    && apt-get install -y build-essential \
+    wget git vim sudo 
+    # \
+    # && apt-get clean \
+    # && rm -rf /var/lib/apt/lists/*
+    
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    ninja-build \
+    libxi-dev \
+    libosmesa6-dev libglew-dev  x11-apps 
+
+ENV CONDA_DIR /opt/conda
+
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-py38_23.10.0-1-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda
+
+ENV PATH=$CONDA_DIR/bin:$PATH
+
+WORKDIR /install
+RUN git clone https://github.com/IDEA-Research/GroundingDINO.git
+RUN export CUDA_HOME=/usr/local/cuda
+
+WORKDIR /install/GroundingDINO
+RUN pip install torch==1.13.1+cu117 torchvision==0.14.1+cu117 torchaudio==0.13.1 --extra-index-url https://download.pytorch.org/whl/cu117
+#RUN pip install torch==2.1.0 torchvision==0.16.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu118
+RUN conda install -c conda-forge python-devtools
+RUN pip install -e .
+
+RUN pip install jupyterlab
+RUN pip install  roboflow
+
+
+RUN  apt-get update && apt-get install libgtk-3-dev
+
+#=========================
+
+ARG UID
+ARG GID 
+RUN useradd -rm -l -s /bin/bash dkuser -G sudo -u ${UID} 
+RUN groupadd -g ${GID} ugroup
+
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+USER dkuser 
+RUN conda init bash
+
+WORKDIR /work 
+CMD ["/bin/bash"]
